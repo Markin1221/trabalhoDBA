@@ -7,8 +7,39 @@ if __name__ == '__main__':
     BD.remover_produto('produto1')
     print("-----------------------------")
     BD.listar_produtos()
-    
-    resposta = input("Deseja remover ou adicionar (r/a): ")
+    funcao = input("Deseja editar, consultar, listar produtos ou remover/adicionar? (e/c/l/r): ")
+    if funcao == 'e':
+        atributo_a_mudar = input("Digite o atributo que deseja mudar (nome, descricao, preco, categoria): ")
+        nome_produto = input("Digite o nome do produto que deseja consultar: ")
+        BD.consultarProduto(nome_produto)
+        novo_valor = input("Digite o novo valor: ")
+        if atributo_a_mudar == 'preco':
+            novo_valor = float(novo_valor)
+        elif atributo_a_mudar == 'categoria':
+            novo_valor = Categoria(novo_valor)
+        elif atributo_a_mudar == 'nome':
+            novo_valor = str(novo_valor)
+        elif atributo_a_mudar == 'descricao':
+            novo_valor = str(novo_valor)
+        BD.editarProduto("Mouse", atributo_a_mudar, novo_valor)
+
+        
+        
+    elif funcao == 'c':
+        print("Você escolheu consultar um produto.")
+        nome_produto = input("Digite o nome do produto que deseja consultar: ")
+        BD.consultarProduto(nome_produto)
+        
+        
+    elif funcao == 'l':
+        print("Você escolheu listar produtos.")
+        BD.listar_produtos()
+        
+        
+        
+        
+    elif funcao == 'r':
+         resposta = input("Deseja remover ou adicionar (r/a): ")
     if resposta.lower() == 'r':
         chave_produto = input("Digite a chave do produto que deseja remover: ")
         BD.remover_produto(chave_produto)
@@ -20,6 +51,8 @@ if __name__ == '__main__':
         categoria_produto = input("Digite a categoria do produto: ")
         
         BD.inserir_produto(nome_produto, descricao_produto, preco_produto, categoria_produto)
+    
+   
 
         BD.listar_produtos()
         
