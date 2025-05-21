@@ -10,7 +10,6 @@ class Produto(Persistent):
         self.descricao = descricao
         self.preco = preco
         self.categoria = categoria
-    def printar(self):
-        print(f"Produto: {self.nome}, Descrição: {self.descricao}, Preço: {self.preco}, Categoria: {self.categoria.nome}")
-        
 
+    def printar(self):
+        print(f"{self.nome} | {self.descricao} | R${self.preco:.2f} | Categoria: {self.categoria.nome}")

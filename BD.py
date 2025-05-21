@@ -89,25 +89,37 @@ def listar_produtos(banco_path='loja.fs'):
 def editarProduto(nome_produto, atributo, novo_valor, banco_path='loja.fs'):
     db, connection, root = inicializar_banco(banco_path)
     try:
-        encontrado = False
-        for produto in root.produtos.values():
+        chave_encontrada = None
+        for chave, produto in root.produtos.items():
             if produto.nome.lower() == nome_produto.lower():
-                if hasattr(produto, atributo):
-                    setattr(produto, atributo, novo_valor)
-                    print(f"Atributo '{atributo}' do produto '{nome_produto}' atualizado para: {novo_valor}")
-                    connection.transaction_manager.commit()  # Salva as alterações
-                    encontrado = True
-                    break
-                else:
-                    print(f"O atributo '{atributo}' não existe nesse produto.")
-                    encontrado = True
-                    break
-        if not encontrado:
+                chave_encontrada = chave
+                break
+
+        if chave_encontrada is None:
             print(f"Produto com nome '{nome_produto}' não encontrado.")
+            return
+
+        produto = root.produtos[chave_encontrada]
+
+        if atributo == 'nome':
+            produto.nome = novo_valor
+            # Atualiza a chave do dicionário
+            root.produtos[novo_valor] = produto
+            del root.produtos[chave_encontrada]
+            print(f"Nome do produto alterado para '{novo_valor}' e chave atualizada.")
+        else:
+            if hasattr(produto, atributo):
+                setattr(produto, atributo, novo_valor)
+                print(f"Atributo '{atributo}' do produto '{nome_produto}' atualizado para: {novo_valor}")
+            else:
+                print(f"O atributo '{atributo}' não existe.")
+                return
+
+        transaction.commit()
+
     finally:
         connection.close()
         db.close()
-
     
      
 def consultarProduto(nome_produto, banco_path='loja.fs'):
