@@ -24,6 +24,18 @@ def adicionar_avaliacao(cliente_id, produto_id, nota, comentario, data=None):
 
 def listar_avaliacoes_produto(produto_id):
     avaliacoes = colecao_avaliacoes.find({"produto_id": produto_id})
+    
+    produto_id = str(produto_id)
+    
+    # Converte o cursor em lista
+    avaliacoes = list(colecao_avaliacoes.find({"produto_id": produto_id}))
+    
+    # Verifica se está vazio
+    if not avaliacoes:
+        print(f"Produto {produto_id} não possui avaliação.")
+        return
+    
+    # Imprime as avaliações
     for a in avaliacoes:
         print(f"[{a['data'].strftime('%d/%m/%Y %H:%M:%S')}] Cliente {a['cliente_id']} - Nota: {a['nota']} - {a['comentario']}")
 
@@ -144,8 +156,8 @@ def agrupar_clientes_por_comportamento(n_clusters=3):
 if __name__ == "__main__":
     popular_avaliacoes_iniciais()
     
-    print("\nAvaliações do produto '2':") 
-    listar_avaliacoes_produto("2")  # Exemplo de produto
+    print("\nAvaliações do produto '1':") 
+    listar_avaliacoes_produto("1")  # Exemplo de produto
     
     remover_duplicatas()
     agrupar_clientes_por_comportamento(n_clusters=3)
