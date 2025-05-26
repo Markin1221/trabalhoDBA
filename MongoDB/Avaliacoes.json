@@ -1,0 +1,114 @@
+[
+  {
+    "cliente_id": "1",
+    "produto_id": "1",
+    "data": "2024-01-20T15:00:00",
+    "nota": 5,
+    "comentario": "Excelente smartphone! Muito rápido e câmera incrível."
+  },
+  {
+    "cliente_id": "1",
+    "produto_id": "11",
+    "data": "2024-02-10T10:30:00",
+    "nota": 4,
+    "comentario": "Ótimo produto, mas achei o preço um pouco alto."
+  },
+  {
+    "cliente_id": "2",
+    "produto_id": "10",
+    "data": "2024-01-30T11:30:00",
+    "nota": 4,
+    "comentario": "Notebook rápido, mas esquenta um pouco durante uso intenso."
+  },
+  {
+    "cliente_id": "3",
+    "produto_id": "3",
+    "data": "2024-01-25T14:45:00",
+    "nota": 5,
+    "comentario": "TV com qualidade de imagem fantástica. Super recomendo!"
+  },
+  {
+    "cliente_id": "4",
+    "produto_id": "1",
+    "data": "2024-01-19T16:45:00",
+    "nota": 5,
+    "comentario": "Smartphone com som excelente, bateria dura bastante."
+  },
+  {
+    "cliente_id": "6",
+    "produto_id": "2",
+    "data": "2024-01-18T09:15:00",
+    "nota": 5,
+    "comentario": "Café delicioso, aroma incrível. Compro sempre!"
+  },
+  {
+    "cliente_id": "11",
+    "produto_id": "5",
+    "data": "2024-01-22T11:00:00",
+    "nota": 5,
+    "comentario": "Camisa de excelente qualidade. Tecido muito bom."
+  },
+  {
+    "cliente_id": "13",
+    "produto_id": "13",
+    "data": "2024-02-08T16:20:00",
+    "nota": 4,
+    "comentario": "Tênis confortável, mas esperava mais pela marca."
+  },
+  {
+    "cliente_id": "16",
+    "produto_id": "4",
+    "data": "2024-01-20T09:00:00",
+    "nota": 5,
+    "comentario": "Panelas antiaderentes de verdade. Muito satisfeita!"
+  },
+  {
+    "cliente_id": "19",
+    "produto_id": "7",
+    "data": "2024-01-28T13:30:00",
+    "nota": 3,
+    "comentario": "Bicicleta boa, mas veio com alguns ajustes a fazer."
+  },
+  {
+    "cliente_id": "22",
+    "produto_id": "12",
+    "data": "2024-02-05T10:45:00",
+    "nota": 5,
+    "comentario": "Hidratante maravilhoso! Deixa a pele super macia."
+  },
+  {
+    "cliente_id": "26",
+    "produto_id": "6",
+    "data": "2024-01-23T14:30:00",
+    "nota": 4,
+    "comentario": "Livro bom, mas esperava mais do autor."
+  },
+  {
+    "cliente_id": "31",
+    "produto_id": "8",
+    "data": "2024-01-26T15:15:00",
+    "nota": 5,
+    "comentario": "Livro envolvente, não consegui parar de ler!"
+  },
+  {
+    "cliente_id": "35",
+    "produto_id": "9",
+    "data": "2024-02-01T10:15:00",
+    "nota": 5,
+    "comentario": "Quebra-cabeça desafiador e divertido para toda família."
+  },
+  {
+    "cliente_id": "37",
+    "produto_id": "14",
+    "data": "2024-02-12T14:00:00",
+    "nota": 5,
+    "comentario": "Minha filha adorou! Brinquedo de qualidade."
+  },
+  {
+    "cliente_id": "3",
+    "produto_id": "14",
+    "data": "2024-02-10T10:35:00",
+    "nota": 2,
+    "comentario": "não gostei, achei o material frágil e não durou muito tempo."
+  }
+]
