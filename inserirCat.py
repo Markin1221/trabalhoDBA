@@ -2,11 +2,9 @@ import ZODB
 import ZODB.FileStorage
 from BTrees.OOBTree import OOBTree
 import transaction
-from classes import Produto, Categoria,Fornecedor,ProdutoFornecedor,Estoque,Promocao,ProdutoPromocao
-
-
+from classes import Produto, Categoria, Fornecedor, ProdutoFornecedor, Estoque, Promocao, ProdutoPromocao
 from ZODB import FileStorage, DB
-from BTrees.OOBTree import OOBTree
+
 
 def inicializar_banco(banco_path='loja.fs'):
     storage = FileStorage.FileStorage(banco_path)
@@ -29,9 +27,8 @@ def inicializar_banco(banco_path='loja.fs'):
         root.promocoes = OOBTree()           # key: nome_promocao, value: Promocao
     if not hasattr(root, 'produto_promocao'):
         root.produto_promocao = OOBTree()    # key: (id_produto, nome_promocao), value: ProdutoPromocao
-    
+
     return db, connection, root
-    
 
 
 def inserir_categoria(id_categoria, nome_categoria, descricao=None, banco_path='loja.fs'):
@@ -94,7 +91,6 @@ def remover_produto(id_produto, banco_path='loja.fs'):
         db.close()
 
 
-
 def listar_produtos(banco_path='loja.fs'):
     db, connection, root = inicializar_banco(banco_path)
     try:
@@ -108,7 +104,6 @@ def listar_produtos(banco_path='loja.fs'):
                   f"Preço: R${produto.preco_atual:.2f} | Categoria: {produto.categoria.nome_categoria} | "
                   f"Marca: {produto.marca} | Unidade: {produto.unidade_medida} | Ativo: {produto.ativo}")
     finally:
-        # não chame transaction.abort() aqui, só feche a conexão e db
         connection.close()
         db.close()
 
@@ -121,7 +116,7 @@ def listar_categorias(retornar=False, banco_path='loja.fs'):
             return [] if retornar else None
 
         if retornar:
-            return list(root.categorias.keys())  # retorna IDs das categorias, ex: ['C1', 'C2']
+            return list(root.categorias.keys())
 
         print("--- Categorias Cadastradas ---")
         for id_categoria, categoria in root.categorias.items():
@@ -129,6 +124,7 @@ def listar_categorias(retornar=False, banco_path='loja.fs'):
     finally:
         connection.close()
         db.close()
+
 
 def editar_produto(id_produto, atributo, novo_valor, banco_path='loja.fs'):
     db, connection, root = inicializar_banco(banco_path)
@@ -170,7 +166,7 @@ def consultar_produto(id_produto, banco_path='loja.fs'):
     try:
         if id_produto in root.produtos:
             produto = root.produtos[id_produto]
-            print(f"ID: {id_produto}| Nome: {produto.nome_produto} | Descrição: {produto.descricao} | "
+            print(f"ID: {id_produto} | Nome: {produto.nome_produto} | Descrição: {produto.descricao} | "
                   f"Preço: R${produto.preco_atual:.2f} | Categoria: {produto.categoria.nome_categoria} | "
                   f"Marca: {produto.marca} | Unidade: {produto.unidade_medida} | Ativo: {produto.ativo}")
         else:
@@ -180,32 +176,7 @@ def consultar_produto(id_produto, banco_path='loja.fs'):
         db.close()
 
 
-def inserir_dado_exemplo():
-    db, connection, root = inicializar_banco()
-    try:
-        # Inserindo categorias
-        cat = Categoria("C1", "Eletrônicos", "Categoria de eletrônicos")
-        root.categorias[cat.id_categoria] = cat
-
-        # Inserindo produtos
-        p1 = Produto("P1", "0001", "Smartphone Android", "Celular Android 5G", 1999.90,
-                     cat, "Samsung", "Unidade")
-        p2 = Produto("P2", "0002", "iPhone", "Celular da maçã", 5999.90,
-                     cat, "Apple", "Unidade")
-
-        root.produtos[p1.id_produto] = p1
-        root.produtos[p2.id_produto] = p2
-
-        transaction.commit()
-        print("Categorias e produtos de exemplo inseridos com sucesso.")
-    finally:
-        connection.close()
-        db.close()
-
-
-
 def inserir_categorias(banco_path='loja.fs'):
-    import transaction
     db, connection, banco = inicializar_banco(banco_path)
 
     categorias = [
@@ -221,13 +192,13 @@ def inserir_categorias(banco_path='loja.fs'):
         (10, 'Eletrodomésticos'),
     ]
 
-    if 'categorias' not in banco:
-        banco['categorias'] = {}
+    if not hasattr(banco, 'categorias'):
+        banco.categorias = OOBTree()
 
     for id_categoria, nome_categoria in categorias:
-        if id_categoria not in banco['categorias']:
+        if id_categoria not in banco.categorias:
             categoria = Categoria(id_categoria, nome_categoria)
-            banco['categorias'][id_categoria] = categoria
+            banco.categorias[id_categoria] = categoria
 
     banco._p_changed = True
     transaction.commit()
@@ -235,9 +206,8 @@ def inserir_categorias(banco_path='loja.fs'):
     connection.close()
     db.close()
 
-    
-def inserir_produtos(banco_path='loja.fs'):
-    import transaction
+
+def inserir_produtos_base(banco_path='loja.fs'):
     db, connection, banco = inicializar_banco(banco_path)
 
     produtos = [
@@ -259,35 +229,28 @@ def inserir_produtos(banco_path='loja.fs'):
         (40, 'Carrinho Mattel', 7)
     ]
 
-    if 'produtos' not in banco:
-        banco['produtos'] = {}
+    if not hasattr(banco, 'produtos'):
+        banco.produtos = OOBTree()
 
     for id_produto, nome_produto, id_categoria in produtos:
-        categoria_obj = banco['categorias'].get(id_categoria)
+        categoria_obj = banco.categorias.get(id_categoria)
         if not categoria_obj:
             print(f"[ERRO] Categoria ID {id_categoria} não encontrada para produto {nome_produto}")
             continue
 
-        # Valores padrão para os parâmetros obrigatórios
-        codigo_produto = f"C{id_produto:05d}"  # exemplo de código fictício
-        descricao = f"Descrição do produto {nome_produto}"
-        preco_atual = 100.0  # preço padrão fictício
-        marca = "Marca Genérica"
-        unidade_medida = "un"  # unidade genérica
-        ativo = True
-
         produto = Produto(
             id_produto=id_produto,
-            codigo_produto=codigo_produto,
+            codigo_produto=f"C{id_produto:05d}",
             nome_produto=nome_produto,
-            descricao=descricao,
-            preco_atual=preco_atual,
+            descricao=f"Descrição do produto {nome_produto}",
+            preco_atual=100.0,
             categoria=categoria_obj,
-            marca=marca,
-            unidade_medida=unidade_medida,
-            ativo=ativo
+            marca="Marca Genérica",
+            unidade_medida="un",
+            ativo=True
         )
-        banco['produtos'][id_produto] = produto
+
+        banco.produtos[id_produto] = produto
 
     banco._p_changed = True
     transaction.commit()
@@ -295,6 +258,123 @@ def inserir_produtos(banco_path='loja.fs'):
     connection.close()
     db.close()
 
+
+def inserir_fornecedores(banco_path='loja.fs'):
+    db, connection, banco = inicializar_banco(banco_path)
+
+    fornecedores = [
+        ('12345678000100', 'Samsung Eletrônicos do Brasil LTDA', 'Samsung Brasil', '11-5644-2000', 'contato@samsung.com.br', 'Av. Dr. Chucri Zaidan, 1240', 'São Paulo', 'SP'),
+        ('23456789000111', 'Dell Computadores do Brasil LTDA', 'Dell Brasil', '11-5503-5000', 'vendas@dell.com.br', 'Av. Industrial, 700', 'Eldorado do Sul', 'RS'),
+        ('34567890000122', 'Nestlé Brasil LTDA', 'Nestlé', '11-2199-2999', 'faleconosco@nestle.com.br', 'Av. Nações Unidas, 12495', 'São Paulo', 'SP'),
+        ('45678901000133', 'Nike do Brasil Com. e Part. LTDA', 'Nike Brasil', '11-5102-4400', 'atendimento@nike.com.br', 'Av. das Nações Unidas, 14261', 'São Paulo', 'SP'),
+        ('56789012000144', 'Tramontina S.A.', 'Tramontina', '54-3461-8200', 'sac@tramontina.com.br', 'Rod. RS-324 Km 2,5', 'Carlos Barbosa', 'RS'),
+        ('67890123000155', 'Procter & Gamble do Brasil S.A.', 'P&G Brasil', '11-3046-5800', 'atendimento@pg.com.br', 'Av. Brigadeiro Faria Lima, 3900', 'São Paulo', 'SP'),
+        ('78901234000166', 'Mattel do Brasil LTDA', 'Mattel', '11-5090-8500', 'sac@mattel.com.br', 'Av. Tamboré, 1400', 'Barueri', 'SP'),
+        ('89012345000177', 'Editora Intrínseca LTDA', 'Intrínseca', '21-2206-7400', 'contato@intrinseca.com', 'Rua Marquês de São Vicente, 99', 'Rio de Janeiro', 'RJ'),
+        ('90123456000188', 'JBL do Brasil', 'JBL', '11-3048-1700', 'suporte@jbl.com.br', 'Rua James Clerk Maxwell, 170', 'Campinas', 'SP'),
+        ('01234567000199', 'Melitta do Brasil', 'Melitta', '47-3801-5000', 'sac@melitta.com.br', 'Rua Dona Francisca, 8300', 'Joinville', 'SC')
+    ]
+
+    if not hasattr(banco, 'fornecedores'):
+        banco.fornecedores = OOBTree()
+
+    for cnpj, razao_social, nome_fantasia, telefone, email, endereco, cidade, estado in fornecedores:
+        fornecedor = Fornecedor(
+            cnpj=cnpj,
+            razao_social=razao_social,
+            nome_fantasia=nome_fantasia,
+            telefone=telefone,
+            email=email,
+            endereco=endereco,
+            cidade=cidade,
+            estado=estado
+        )
+        banco.fornecedores[cnpj] = fornecedor
+
+    banco._p_changed = True
+    transaction.commit()
+
+    connection.close()
+    db.close()
+
+
+def inserir_produtos_fornecedores(banco_path='loja.fs'):
+    db, connection, banco = inicializar_banco(banco_path)
+
+    relacoes = [
+        # Samsung
+        (1, '12345678000100', 2800.00, 7),
+        (3, '12345678000100', 1800.00, 10),
+
+        # Dell
+        (2, '23456789000111', 2300.00, 15),
+
+        # Nestlé
+        (7, '34567890000122', 20.00, 5),
+        (8, '34567890000122', 6.50, 5),
+
+        # Nike
+        (13, '45678901000133', 320.00, 10),
+
+        # Tramontina
+        (16, '56789012000144', 240.00, 7),
+
+        # P&G
+        (21, '67890123000155', 14.50, 5),
+        (22, '67890123000155', 19.00, 5),
+        (25, '67890123000155', 69.90, 7),
+
+        # Mattel
+        (37, '78901234000166', 120.00, 10),
+        (40, '78901234000166', 9.90, 5),
+
+        # Intrínseca
+        (31, '89012345000177', 39.00, 7),
+
+        # JBL
+        (4, '90123456000188', 199.00, 5),
+
+        # Melitta
+        (6, '01234567000199', 19.90, 3)
+    ]
+
+    if not hasattr(banco, 'produto_fornecedor'):
+        banco.produto_fornecedor = OOBTree()
+
+    for id_produto, cnpj_fornecedor, preco_compra, prazo_entrega in relacoes:
+        produto_obj = banco.produtos.get(id_produto)
+        fornecedor_obj = banco.fornecedores.get(cnpj_fornecedor)
+
+        if not produto_obj:
+            print(f"[ERRO] Produto com ID {id_produto} não encontrado.")
+            continue
+
+        if not fornecedor_obj:
+            print(f"[ERRO] Fornecedor com CNPJ {cnpj_fornecedor} não encontrado.")
+            continue
+
+        chave_relacao = (id_produto, cnpj_fornecedor)
+
+        if chave_relacao in banco.produto_fornecedor:
+            print(f"[AVISO] Relação Produto {id_produto} e Fornecedor {cnpj_fornecedor} já existe. Pulando.")
+            continue
+
+        pf = ProdutoFornecedor(
+            produto=produto_obj,
+            fornecedor=fornecedor_obj,
+            preco_compra=preco_compra,
+            prazo_entrega=prazo_entrega
+        )
+
+        banco.produto_fornecedor[chave_relacao] = pf
+        print(f"[SUCESSO] Relação Produto {id_produto} com Fornecedor {cnpj_fornecedor} inserida.")
+
+    banco._p_changed = True
+    transaction.commit()
+    print("[INFO] Inserção de produtos-fornecedores concluída com sucesso.")
+
+    connection.close()
+    db.close()
 
 
 def inserir_fornecedores(banco_path='loja.fs'):
@@ -419,7 +499,7 @@ def popular_banco_completo(banco_path='loja.fs'):
     print("Inserindo categorias...")
     inserir_categorias(banco_path)
     print("Inserindo produtos...")
-    inserir_produtos(banco_path)
+    inserir_produtos_base(banco_path)
     print("Inserindo fornecedores...")
     inserir_fornecedores(banco_path)
     print("Inserindo relações produtos-fornecedores...")
@@ -427,9 +507,7 @@ def popular_banco_completo(banco_path='loja.fs'):
     print("Banco populado com sucesso!")
 
 
-
-
 if __name__ == '__main__':
     popular_banco_completo('loja.fs')
-    listar_produtos()
-    
+    listar_produtos('loja.fs')
+

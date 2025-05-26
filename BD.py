@@ -3,10 +3,9 @@ import ZODB.FileStorage
 from BTrees.OOBTree import OOBTree
 import transaction
 from classes import Produto, Categoria,Fornecedor,ProdutoFornecedor,Estoque,Promocao,ProdutoPromocao
-
-
 from ZODB import FileStorage, DB
-from BTrees.OOBTree import OOBTree
+
+
 
 def inicializar_banco(banco_path='loja.fs'):
     storage = FileStorage.FileStorage(banco_path)
@@ -236,7 +235,7 @@ def inserir_categorias(banco_path='loja.fs'):
     db.close()
 
     
-def inserir_produtos(banco_path='loja.fs'):
+def inserir_produtos_base(banco_path='loja.fs'):
     import transaction
     db, connection, banco = inicializar_banco(banco_path)
 
@@ -259,6 +258,7 @@ def inserir_produtos(banco_path='loja.fs'):
         (40, 'Carrinho Mattel', 7)
     ]
 
+    # Cria dicionário produtos se não existir
     if 'produtos' not in banco:
         banco['produtos'] = {}
 
@@ -268,25 +268,18 @@ def inserir_produtos(banco_path='loja.fs'):
             print(f"[ERRO] Categoria ID {id_categoria} não encontrada para produto {nome_produto}")
             continue
 
-        # Valores padrão para os parâmetros obrigatórios
-        codigo_produto = f"C{id_produto:05d}"  # exemplo de código fictício
-        descricao = f"Descrição do produto {nome_produto}"
-        preco_atual = 100.0  # preço padrão fictício
-        marca = "Marca Genérica"
-        unidade_medida = "un"  # unidade genérica
-        ativo = True
-
         produto = Produto(
             id_produto=id_produto,
-            codigo_produto=codigo_produto,
+            codigo_produto=f"C{id_produto:05d}",
             nome_produto=nome_produto,
-            descricao=descricao,
-            preco_atual=preco_atual,
+            descricao=f"Descrição do produto {nome_produto}",
+            preco_atual=100.0,
             categoria=categoria_obj,
-            marca=marca,
-            unidade_medida=unidade_medida,
-            ativo=ativo
+            marca="Marca Genérica",
+            unidade_medida="un",
+            ativo=True
         )
+
         banco['produtos'][id_produto] = produto
 
     banco._p_changed = True
@@ -294,6 +287,7 @@ def inserir_produtos(banco_path='loja.fs'):
 
     connection.close()
     db.close()
+
 
 
 
@@ -419,12 +413,13 @@ def popular_banco_completo(banco_path='loja.fs'):
     print("Inserindo categorias...")
     inserir_categorias(banco_path)
     print("Inserindo produtos...")
-    inserir_produtos(banco_path)
+    inserir_produtos_base(banco_path)
     print("Inserindo fornecedores...")
     inserir_fornecedores(banco_path)
     print("Inserindo relações produtos-fornecedores...")
     inserir_produtos_fornecedores(banco_path)
     print("Banco populado com sucesso!")
+
 
 
 
