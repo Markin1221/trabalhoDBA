@@ -1,5 +1,7 @@
-import BD as BD
-from classes import Categoria
+from . import BD
+
+from .classes import Categoria
+
 
 def menu():
     print("\n--- MENU LOJA ---")

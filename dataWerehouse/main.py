@@ -1,5 +1,5 @@
-from postegres import fetch_vendas_por_hora, prever_vendas, fetch_olap_vendas_completo
-from postegres import consulta_olap, consulta_olap_dinamica
+from .postegres import fetch_vendas_por_hora, prever_vendas, fetch_olap_vendas_completo
+from .postegres import consulta_olap, consulta_olap_dinamica
 import pandas as pd
 
 dicionarioProfundidade = {

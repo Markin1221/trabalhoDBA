@@ -1,6 +1,6 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from config import POSTGRES
+from .config import POSTGRES
 
 # Conectar ao banco
 def conectar():
@@ -562,6 +562,24 @@ def consulta_olap_dinamica(agrupamentos=[], filtros={}):
     print("\n📊 RESULTADO OLAP DINÂMICO:\n")
     print(df)
     return df
+
+def listar_produtos_postgres(conexao):
+    try:
+        cursor = conexao.cursor()
+
+        query = "SELECT * FROM produtos;"
+        cursor.execute(query)
+
+        produtos = cursor.fetchall()
+
+        print("\n--- Lista de Produtos ---")
+        for produto in produtos:
+            print(produto)
+
+        cursor.close()
+
+    except Exception as e:
+        print(f"Erro ao listar produtos: {e}")
 
 
 # Execução direta

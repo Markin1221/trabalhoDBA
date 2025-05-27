@@ -1,30 +1,24 @@
 from fastapi import FastAPI
-from MongoDB import run       
-from zobd import App
-from dataWerehouse import main
+from MongoDB import run as mongo_run
+from zobd.App import menu,obter_categoria_existente
+from dataWerehouse import main,postegres
+from zobd import BD
 
-
-run = FastAPI(title="API Integrada: MongoDB + PostgreSQL + ZODB")
+app = FastAPI(title="API Integrada: MongoDB + PostgreSQL + ZODB")
 
 # --- MongoDB ---
-@run.get("/mongo")
+@app.get("/mongo")
 def pegar_comentarios_mongo():
-    return {"usuarios": run.escolherProduto()}
+    # Chama a função do MongoDB corretamente
+    return {"usuarios": mongo_run.escolherProduto()}
 
 # --- PostgreSQL (Data Warehouse) ---
-@run.get("/menu")
-def menu():
-    return {"menuOlap": main.menu()}
-
-@run.get("/olap")
-def olap():
-    return {"Olap": main.mostrar_olap()}
+# --- PostgreSQL ---
+@app.get("/postgres/print")
+def print_postgres():
+    return {"print": postegres.listar_produtos_postgres()}
 
 # --- ZODB ---
-@run.get("/zodb")
-def menuzodb():
-    return App.menu()
-
-@run.get("/zodb/categorias")
-def obter_categoria_existente():
-    return App.obter_categoria_existente()
+@app.get("/zodb/print")
+def print_zodb():
+    return {"printzo": BD.listar_produtos()}
