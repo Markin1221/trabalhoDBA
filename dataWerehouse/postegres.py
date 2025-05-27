@@ -227,6 +227,43 @@ def prever_vendas():
     plt.title("Previsão de Vendas (Regressão Linear)")
     plt.grid(True)
     plt.show()
+    
+    
+    
+    
+    def consulta_olap():
+     conn = conectar()
+     sql = """
+    SELECT
+        dt.ano,
+        dt.mes,
+        dl.estado,
+        dl.cidade,
+        p.categoria,
+        p.marca,
+        SUM(fv.quantidade) AS total_quantidade,
+        SUM(fv.valor_total) AS total_valor
+    FROM fato_venda fv
+    JOIN dim_tempo dt ON fv.data_hora = dt.data_hora
+    JOIN dim_local dl ON fv.local_id = dl.id
+    JOIN produto p ON fv.produto_id = p.id
+    GROUP BY
+        dt.ano, dt.mes,
+        dl.estado, dl.cidade,
+        p.categoria, p.marca
+    ORDER BY dt.ano, dt.mes;
+    """
+     with conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(sql)
+            resultado = cur.fetchall()
+     conn.close()  # fechar conexão antes do retorno
+
+    # Exibir no terminal como tabela
+     df = pd.DataFrame(resultado)
+     print("\n📊 RESULTADO OLAP:\n")
+     print(df)
+     return df
 
 # Execução direta
 if __name__ == "__main__":
@@ -235,4 +272,4 @@ if __name__ == "__main__":
     prever_vendas()
 
 
-#funciona pelo amor de deus 
+#funciona pelo amor de deus
