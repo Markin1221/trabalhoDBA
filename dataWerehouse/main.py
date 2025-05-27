@@ -21,7 +21,7 @@ def menu():
         print("\n===== MENU =====")
         print("1 - Consultar vendas por hora")
         print("2 - Prever vendas")
-        print("3 - Exibir análise OLAP completa")
+        print("3 - Exibir análise OLAP basica")
         print("4 - Exibir análise OLAP completa (consulta OLAP)")
         print("5 - Exibir análise OLAP dinâmica")
         print("0 - Sair")
@@ -38,11 +38,11 @@ def menu():
             prever_vendas()
         
         elif escolha == "3":
-            print("\n▶️ Exibindo análise OLAP completa das vendas:")
+            print("\n▶️ Exibindo análise OLAP basica das vendas:")
             mostrar_olap()
             
         elif escolha == "4":
-            print("\n▶️ Exibindo análise OLAP completa das vendas:")
+            print("\n▶️ Exibindo análise OLAP completa das vendas com consulta:")
             consulta_olap()
             
         elif escolha == "5":
@@ -71,11 +71,41 @@ def menu():
 
                 elif olap == 'slice':
                     print("\n▶️ Realizando Slice na análise OLAP dinâmica...")
-                    consulta_olap_dinamica(slice=True)
+
+                    # Escolher a profundidade (agrupamento)
+                    profundidade = int(input("Escolha a profundidade (1 = Ano, 2 = Ano e Mês, 3 = Ano, Mês e Dia): "))
+                    agrupamentos = dicionarioProfundidade.get(profundidade, ["ano"])
+
+                    # Perguntar filtro
+                    coluna_filtro = input("Digite a coluna que deseja filtrar (ex: categoria, marca, ano): ").strip().lower()
+                    valor_filtro = input(f"Digite o valor que deseja filtrar na coluna '{coluna_filtro}': ").strip()
+
+                    consulta_olap_dinamica(
+                        agrupamentos=agrupamentos,
+                        filtros={coluna_filtro: valor_filtro}
+                    )
 
                 elif olap == 'dice':
                     print("\n▶️ Realizando Dice na análise OLAP dinâmica...")
-                    consulta_olap_dinamica(dice=True)
+
+                    # Escolher a profundidade (agrupamento)
+                    profundidade = int(input("Escolha a profundidade (1 = Ano, 2 = Ano e Mês, 3 = Ano, Mês e Dia): "))
+                    agrupamentos = dicionarioProfundidade.get(profundidade, ["ano"])
+
+                    # Perguntar múltiplos filtros
+                    filtros = {}
+                    while True:
+                        coluna_filtro = input("Digite a coluna que deseja filtrar (ou digite '0' para parar): ").strip().lower()
+                        if coluna_filtro == '0':
+                            break
+                        valor_filtro = input(f"Digite o valor que deseja filtrar na coluna '{coluna_filtro}': ").strip()
+                        filtros[coluna_filtro] = valor_filtro
+
+                    consulta_olap_dinamica(
+                        agrupamentos=agrupamentos,
+                        filtros=filtros
+                    )
+
 
                 elif olap == '0':
                     print("Saindo da análise OLAP dinâmica...")

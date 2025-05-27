@@ -11,14 +11,25 @@ def conectar():
 # Criar tabelas
 def criar_tabelas():
     sql = """
-    CREATE TABLE IF NOT EXISTS produto (
-      id SERIAL PRIMARY KEY,
-      nome VARCHAR(100) NOT NULL,
-      categoria VARCHAR(50),
-      marca VARCHAR(50),
-      preco NUMERIC(10,2),
-      estoque INT
-    );
+    CREATE TABLE IF NOT EXISTS categoria (
+    id_categoria INT PRIMARY KEY AUTO_INCREMENT,
+    nome_categoria VARCHAR(50) NOT NULL,
+    descricao TEXT
+);
+
+  CREATE TABLE IF NOT EXISTS produto (
+    id_produto INT PRIMARY KEY AUTO_INCREMENT,
+    codigo_produto VARCHAR(20) UNIQUE NOT NULL,
+    nome_produto VARCHAR(100) NOT NULL,
+    descricao TEXT,
+    id_categoria INT,
+    marca VARCHAR(50),
+    preco_atual DECIMAL(10,2),
+    unidade_medida VARCHAR(20),
+    ativo BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria)
+);
+
 
     CREATE TABLE IF NOT EXISTS dim_tempo (
       data_hora TIMESTAMP PRIMARY KEY,
