@@ -9,65 +9,279 @@ def conectar():
     return conn
 
 # Criar tabelas
-def criar_tabelas():
-    sql = """
+# Criar tabelas
+def criar_categoria(cur):
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS categoria (
-    id_categoria INT PRIMARY KEY AUTO_INCREMENT,
-    nome_categoria VARCHAR(50) NOT NULL,
-    descricao TEXT
-);
-
-  CREATE TABLE IF NOT EXISTS produto (
-    id_produto INT PRIMARY KEY AUTO_INCREMENT,
-    codigo_produto VARCHAR(20) UNIQUE NOT NULL,
-    nome_produto VARCHAR(100) NOT NULL,
-    descricao TEXT,
-    id_categoria INT,
-    marca VARCHAR(50),
-    preco_atual DECIMAL(10,2),
-    unidade_medida VARCHAR(20),
-    ativo BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria)
-);
-
-
-    CREATE TABLE IF NOT EXISTS dim_tempo (
-      data_hora TIMESTAMP PRIMARY KEY,
-      ano INT,
-      mes INT,
-      dia INT,
-      hora INT,
-      minuto INT,
-      segundo INT,
-      trimestre INT
+        id_categoria SERIAL PRIMARY KEY,
+        nome_categoria VARCHAR(50) NOT NULL,
+        descricao TEXT
     );
+    """)
 
-    CREATE TABLE IF NOT EXISTS dim_local (
-      id SERIAL PRIMARY KEY,
-      cidade VARCHAR(100),
-      estado VARCHAR(100),
-      pais VARCHAR(100),
-      UNIQUE (cidade, estado, pais)
+def criar_produto_fornecedor(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS produto_fornecedor (
+        id_produto INT,
+        id_fornecedor INT,
+        preco_compra DECIMAL(10,2),
+        prazo_entrega INT,
+        PRIMARY KEY (id_produto, id_fornecedor),
+        FOREIGN KEY (id_produto) REFERENCES produto(id_produto),
+        FOREIGN KEY (id_fornecedor) REFERENCES fornecedor(id_fornecedor)
     );
+    """)
 
-    CREATE TABLE IF NOT EXISTS fato_venda (
-      id SERIAL PRIMARY KEY,
-      data_hora TIMESTAMP REFERENCES dim_tempo(data_hora),
-      produto_id INT,
-      quantidade INT,
-      valor_total NUMERIC(12,2),
-      local_id INT REFERENCES dim_local(id),
-      data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+def criar_fornecedor(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS fornecedor (
+        id_fornecedor SERIAL PRIMARY KEY,
+        cnpj VARCHAR(14) UNIQUE NOT NULL,
+        razao_social VARCHAR(100) NOT NULL,
+        nome_fantasia VARCHAR(100),
+        telefone VARCHAR(20),
+        email VARCHAR(100),
+        endereco VARCHAR(200),
+        cidade VARCHAR(50),
+        estado CHAR(2),
+        ativo BOOLEAN DEFAULT TRUE
     );
-    """
+    """)
+
+
+def criar_produto(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS produto (
+        id_produto SERIAL PRIMARY KEY,
+        codigo_produto VARCHAR(20) UNIQUE NOT NULL,
+        nome_produto VARCHAR(100) NOT NULL,
+        descricao TEXT,
+        id_categoria INT,
+        marca VARCHAR(50),
+        preco_atual DECIMAL(10,2),
+        unidade_medida VARCHAR(20),
+        ativo BOOLEAN DEFAULT TRUE,
+        FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria)
+    );
+    """)
+
+
+def criar_loja(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS loja (
+        id_loja SERIAL PRIMARY KEY,
+        codigo_loja VARCHAR(10) UNIQUE NOT NULL,
+        nome_loja VARCHAR(50) NOT NULL,
+        endereco VARCHAR(200),
+        cidade VARCHAR(50),
+        estado CHAR(2),
+        cep VARCHAR(8),
+        telefone VARCHAR(20),
+        gerente VARCHAR(100),
+        ativa BOOLEAN DEFAULT TRUE
+    );
+    """)
+
+
+def criar_cliente(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS cliente (
+        id_cliente SERIAL PRIMARY KEY,
+        cpf VARCHAR(11) UNIQUE NOT NULL,
+        nome VARCHAR(100) NOT NULL,
+        email VARCHAR(100),
+        telefone VARCHAR(20),
+        endereco VARCHAR(200),
+        cidade VARCHAR(50),
+        estado CHAR(2),
+        cep VARCHAR(8),
+        ativo BOOLEAN DEFAULT TRUE
+    );
+    """)
+
+
+def criar_funcionario(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS funcionario (
+        id_funcionario SERIAL PRIMARY KEY,
+        codigo_funcionario VARCHAR(10) UNIQUE NOT NULL,
+        nome VARCHAR(100) NOT NULL,
+        cargo VARCHAR(50),
+        id_loja INT,
+        salario DECIMAL(10,2),
+        ativo BOOLEAN DEFAULT TRUE,
+        FOREIGN KEY (id_loja) REFERENCES loja(id_loja)
+    );
+    """)
+
+
+def criar_venda(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS venda (
+        id_venda SERIAL PRIMARY KEY,
+        numero_venda VARCHAR(20) UNIQUE NOT NULL,
+        id_cliente INT,
+        id_loja INT,
+        id_funcionario INT,
+        data_venda TIMESTAMP,
+        valor_total DECIMAL(10,2),
+        desconto_total DECIMAL(10,2),
+        forma_pagamento VARCHAR(30),
+        status_venda VARCHAR(20),
+        FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+        FOREIGN KEY (id_loja) REFERENCES loja(id_loja),
+        FOREIGN KEY (id_funcionario) REFERENCES funcionario(id_funcionario)
+    );
+    """)
+
+
+def criar_item_venda(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS item_venda (
+        id_item SERIAL PRIMARY KEY,
+        id_venda INT,
+        id_produto INT,
+        quantidade INT,
+        preco_unitario DECIMAL(10,2),
+        desconto DECIMAL(10,2),
+        valor_total DECIMAL(10,2),
+        FOREIGN KEY (id_venda) REFERENCES venda(id_venda),
+        FOREIGN KEY (id_produto) REFERENCES produto(id_produto)
+    );
+    """)
+    
+
+
+def criar_compra(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS compra (
+        id_compra SERIAL PRIMARY KEY,
+        numero_compra VARCHAR(20) UNIQUE NOT NULL,
+        id_fornecedor INT,
+        id_loja INT,
+        data_compra TIMESTAMP,
+        valor_total DECIMAL(10,2),
+        status_compra VARCHAR(20),
+        FOREIGN KEY (id_fornecedor) REFERENCES fornecedor(id_fornecedor),
+        FOREIGN KEY (id_loja) REFERENCES loja(id_loja)
+    );
+    """)
+
+
+def criar_item_compra(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS item_compra (
+        id_item SERIAL PRIMARY KEY,
+        id_compra INT,
+        id_produto INT,
+        quantidade INT,
+        preco_unitario DECIMAL(10,2),
+        valor_total DECIMAL(10,2),
+        FOREIGN KEY (id_compra) REFERENCES compra(id_compra),
+        FOREIGN KEY (id_produto) REFERENCES produto(id_produto)
+    );
+    """)
+
+
+def criar_avaliacao(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS avaliacao (
+        id_avaliacao SERIAL PRIMARY KEY,
+        id_produto INT,
+        id_cliente INT,
+        data_avaliacao TIMESTAMP,
+        nota INT CHECK (nota >= 1 AND nota <= 5),
+        comentario TEXT,
+        FOREIGN KEY (id_produto) REFERENCES produto(id_produto),
+        FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente)
+    );
+    """)
+
+
+def criar_promocao(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS promocao (
+        id_promocao SERIAL PRIMARY KEY,
+        nome_promocao VARCHAR(100) NOT NULL,
+        descricao TEXT,
+        data_inicio DATE,
+        data_fim DATE,
+        percentual_desconto DECIMAL(5,2),
+        ativa BOOLEAN DEFAULT TRUE
+    );
+    """)
+
+
+def criar_produto_promocao(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS produto_promocao (
+        id_promocao INT,
+        id_produto INT,
+        preco_promocional DECIMAL(10,2),
+        PRIMARY KEY (id_promocao, id_produto),
+        FOREIGN KEY (id_promocao) REFERENCES promocao(id_promocao),
+        FOREIGN KEY (id_produto) REFERENCES produto(id_produto)
+    );
+    """)
+
+
+def criar_estoque(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS estoque (
+        id_estoque SERIAL PRIMARY KEY,
+        id_produto INT,
+        id_loja INT,
+        quantidade_atual INT,
+        quantidade_minima INT,
+        quantidade_maxima INT,
+        FOREIGN KEY (id_produto) REFERENCES produto(id_produto),
+        FOREIGN KEY (id_loja) REFERENCES loja(id_loja),
+        UNIQUE (id_produto, id_loja)
+    );
+    """)
+
+
+def popular_banco():
     conn = conectar()
     with conn:
         with conn.cursor() as cur:
-            cur.execute(sql)
+            # Tabelas que não têm dependências
+            criar_categoria(cur)
+            criar_fornecedor(cur)
+            criar_loja(cur)
+            criar_cliente(cur)
+
+            # Produto (tem FK em categoria)
+            criar_produto(cur)
+
+            # Relacionamento produto <-> fornecedor
+            criar_produto_fornecedor(cur)
+
+            # Funcionário (tem FK em loja)
+            criar_funcionario(cur)
+            
+
+            # Venda e seus itens
+            criar_venda(cur)
+            criar_item_venda(cur)
+
+            # Compra e seus itens
+            criar_compra(cur)
+            criar_item_compra(cur)
+
+            # Avaliação e promoção
+            criar_avaliacao(cur)
+            criar_promocao(cur)
+            criar_produto_promocao(cur)
+
+            # Estoque (produto + loja)
+            criar_estoque(cur)
     conn.close()
 
-# Inserir produto
+
+
+
 def inserir_produto(prod):
     conn = conectar()
     sql = """
@@ -353,7 +567,7 @@ def consulta_olap_dinamica(agrupamentos=[], filtros={}):
 # Execução direta
 if __name__ == "__main__":
     print("▶️ Rodando script com previsão de vendas...")
-    criar_tabelas()
-    prever_vendas()
+    popular_banco()
+    
 
 #funciona pelo amor de deus
