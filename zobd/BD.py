@@ -2,7 +2,7 @@ import ZODB
 import ZODB.FileStorage
 from BTrees.OOBTree import OOBTree
 import transaction
-from classes import Produto, Categoria, Fornecedor, ProdutoFornecedor, Estoque, Promocao, ProdutoPromocao
+from zobd.classes import Produto, Categoria, Fornecedor, ProdutoFornecedor, Estoque, Promocao, ProdutoPromocao
 from ZODB import FileStorage, DB
 
 
