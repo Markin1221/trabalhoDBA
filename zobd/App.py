@@ -1,5 +1,5 @@
-import zobd.BD as BD
-from zobd.classes import Categoria
+import BD as BD
+from classes import Categoria
 
 def menu():
     print("\n--- MENU LOJA ---")
