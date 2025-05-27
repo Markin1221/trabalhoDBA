@@ -1,18 +1,29 @@
 from fastapi import FastAPI
-from app import escolherProduto
-from postgres_handler import listar_usuarios_postgres
-from zodb_handler import pegar_pessoa_zodb
+from MongoDB import run       
+from zobd import BD                   
+from dataWerehouse import fetch_vendas_por_hora, fetch_olap_vendas_completo, get_dados_para_previsao 
 
-app = FastAPI()
+run = FastAPI(title="API Integrada: MongoDB + PostgreSQL + ZODB")
 
-@app.get("/mongo")
-def get_mongo():
-    return {"usuarios": listar_usuarios_mongo()}
+# --- MongoDB ---
+@run.get("/mongo")
+def pegar_comentarios_mogo():
+    return {"usuarios": run.escolherProduto()}
 
-@app.get("/postgres")
-def get_postgres():
-    return {"usuarios": listar_usuarios_postgres()}
+# --- PostgreSQL (Data Warehouse) ---
+@run.get("/vendas/hora")
+def vendas_por_hora():
+    return fetch_vendas_por_hora()
 
-@app.get("/zodb")
-def get_zodb():
-    return pegar_pessoa_zodb()
+@run.get("/olap")
+def olap():
+    return fetch_olap_vendas_completo()
+
+@run.get("/previsao/dados")
+def dados_previsao():
+    return get_dados_para_previsao()
+
+# --- ZODB ---
+@run.get("/zodb")
+def pegar_objeto_zodb():
+    return ()
