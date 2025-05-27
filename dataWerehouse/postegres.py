@@ -165,6 +165,29 @@ def get_dados_para_previsao():
     conn.close()
     return rows
 
+def fetch_olap_vendas_completo():
+    sql = """
+    SELECT
+        dt.ano, dt.mes, dt.dia,
+        dl.cidade, dl.estado,
+        p.categoria, p.marca,
+        SUM(fv.quantidade) AS total_quantidade,
+        SUM(fv.valor_total) AS total_valor
+    FROM fato_venda fv
+    JOIN dim_tempo dt ON fv.data_hora = dt.data_hora
+    JOIN dim_local dl ON fv.local_id = dl.id
+    JOIN produto p ON fv.produto_id = p.id
+    GROUP BY dt.ano, dt.mes, dt.dia, dl.cidade, dl.estado, p.categoria, p.marca
+    ORDER BY dt.ano, dt.mes, dt.dia, dl.cidade, dl.estado, p.categoria, p.marca;
+    """
+    conn = conectar()
+    with conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(sql)
+            resultados = cur.fetchall()
+    conn.close()
+    return resultados
+
 # 📈 Previsão de vendas
 import pandas as pd
 from sklearn.linear_model import LinearRegression
