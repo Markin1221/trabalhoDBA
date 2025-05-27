@@ -206,10 +206,10 @@ def prever_vendas():
     plt.show()
 
 # Execução direta
-if __name__ == "_main_":
+if __name__ == "__main__":
     print("▶️ Rodando script com previsão de vendas...")
     criar_tabelas()
-    prever_vendas()
+    
 
 
 #funciona pelo amor de deus 
