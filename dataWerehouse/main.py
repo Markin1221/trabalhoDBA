@@ -1,7 +1,12 @@
 from postegres import fetch_vendas_por_hora, prever_vendas, fetch_olap_vendas_completo
+from postegres import consulta_olap, consulta_olap_dinamica
 import pandas as pd
 
-
+dicionarioProfundidade = {
+    1: ["ano"],
+    2: ["ano", "mes"],
+    3: ["ano", "mes", "dia"]
+}
 
 def mostrar_olap():
     dados = fetch_olap_vendas_completo()
@@ -17,6 +22,8 @@ def menu():
         print("1 - Consultar vendas por hora")
         print("2 - Prever vendas")
         print("3 - Exibir análise OLAP completa")
+        print("4 - Exibir análise OLAP completa (consulta OLAP)")
+        print("5 - Exibir análise OLAP dinâmica")
         print("0 - Sair")
         escolha = input("Escolha uma opção: ").strip()
 
@@ -33,6 +40,50 @@ def menu():
         elif escolha == "3":
             print("\n▶️ Exibindo análise OLAP completa das vendas:")
             mostrar_olap()
+            
+        elif escolha == "4":
+            print("\n▶️ Exibindo análise OLAP completa das vendas:")
+            consulta_olap()
+            
+        elif escolha == "5":
+            while True:
+                print("voce quer fazer o drill down, o roll up ou o slice ou dice?")
+                olap = input("Digite 'drill' ou 'roll', 'slice' ou 'dice' ou 0 pra sair: ").strip().lower()
+
+                if olap == 'drill' or olap == 'roll':
+                    consulta_olap_dinamica(agrupamentos=["ano"])
+                    profundidade = 1
+
+                    rollDrill = input("Você quer fazer o drill down ou roll up? (drill/roll): ").strip().lower()
+
+                    if rollDrill == 'drill':
+                        while profundidade < 3:
+                            consulta_olap_dinamica(agrupamentos=[dicionarioProfundidade[profundidade]])
+                            profundidade += 1
+
+                    elif rollDrill == 'roll':
+                        while profundidade > 1:
+                            consulta_olap_dinamica(agrupamentos=[dicionarioProfundidade[profundidade]])
+                            profundidade -= 1
+
+                    else:
+                        print("Opção inválida. Por favor, escolha entre 'drill' ou 'roll'.")
+
+                elif olap == 'slice':
+                    print("\n▶️ Realizando Slice na análise OLAP dinâmica...")
+                    consulta_olap_dinamica(slice=True)
+
+                elif olap == 'dice':
+                    print("\n▶️ Realizando Dice na análise OLAP dinâmica...")
+                    consulta_olap_dinamica(dice=True)
+
+                elif olap == '0':
+                    print("Saindo da análise OLAP dinâmica...")
+                    break
+
+                else:
+                    print("Opção inválida. Por favor, escolha entre 'drill', 'roll', 'slice' ou 'dice'.")
+
 
         elif escolha == "0":
             print("Saindo... Até mais!")

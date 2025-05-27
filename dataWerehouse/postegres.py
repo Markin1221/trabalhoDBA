@@ -231,7 +231,7 @@ def prever_vendas():
     
     
     
-    def consulta_olap():
+def consulta_olap():
      conn = conectar()
      sql = """
     SELECT
@@ -263,13 +263,86 @@ def prever_vendas():
      df = pd.DataFrame(resultado)
      print("\n📊 RESULTADO OLAP:\n")
      print(df)
+     print("faz o L porraaaaaaa")
      return df
+  
+  
+def consulta_olap_dinamica(agrupamentos=[], filtros={}):
+    conn = conectar()
+
+    # Definir possíveis dimensões
+    dimensoes = {
+        "ano": "dt.ano",
+        "mes": "dt.mes",
+        "dia": "dt.dia",
+        "cidade": "dl.cidade",
+        "estado": "dl.estado",
+        "pais": "dl.pais",
+        "categoria": "p.categoria",
+        "marca": "p.marca"
+    }
+
+    # Montagem das colunas SELECT e GROUP BY
+    select_cols = []
+    group_by_cols = []
+
+    for ag in agrupamentos:
+        if ag in dimensoes:
+            select_cols.append(dimensoes[ag])
+            group_by_cols.append(dimensoes[ag])
+
+    select_clause = ", ".join(select_cols) if select_cols else ""
+    group_by_clause = ", ".join(group_by_cols) if group_by_cols else ""
+
+    # SELECT padrão com medidas
+    sql = f"""
+        SELECT
+            {select_clause}{"," if select_clause else ""}
+            SUM(fv.quantidade) AS total_quantidade,
+            SUM(fv.valor_total) AS total_valor
+        FROM fato_venda fv
+        JOIN dim_tempo dt ON fv.data_hora = dt.data_hora
+        JOIN dim_local dl ON fv.local_id = dl.id
+        JOIN produto p ON fv.produto_id = p.id
+    """
+
+    # WHERE de filtros
+    where_clause = ""
+    if filtros:
+        conditions = []
+        for key, value in filtros.items():
+            if key in dimensoes:
+                conditions.append(f"{dimensoes[key]} = %s")
+        where_clause = "WHERE " + " AND ".join(conditions)
+
+    # Final SQL
+    if group_by_clause:
+        sql += f" {where_clause} GROUP BY {group_by_clause} ORDER BY {group_by_clause};"
+    else:
+        sql += f" {where_clause};"
+
+    # Coletar valores dos filtros
+    values = tuple(v for k, v in filtros.items() if k in dimensoes)
+
+    # Executar consulta
+    with conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(sql, values)
+            resultado = cur.fetchall()
+
+    conn.close()
+
+    # Mostrar em dataframe
+    df = pd.DataFrame(resultado)
+    print("\n📊 RESULTADO OLAP DINÂMICO:\n")
+    print(df)
+    return df
+
 
 # Execução direta
 if __name__ == "__main__":
     print("▶️ Rodando script com previsão de vendas...")
     criar_tabelas()
     prever_vendas()
-
 
 #funciona pelo amor de deus
