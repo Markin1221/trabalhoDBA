@@ -1,4 +1,4 @@
-from . import Principal
+import Principal
 
 def escolherProduto():
     encerrar = ""  

@@ -1,6 +1,6 @@
-from . import BD
+import BD
 
-from .classes import Categoria
+from classes import Categoria
 
 
 def menu():

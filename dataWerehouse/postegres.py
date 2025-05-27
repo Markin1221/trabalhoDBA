@@ -1,6 +1,6 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from .config import POSTGRES
+from config import POSTGRES
 
 # Conectar ao banco
 def conectar():
@@ -369,19 +369,18 @@ def fetch_vendas_por_hora():
     conn.close()
     return rows
 
-# 🔍 Dados para previsão
 def get_dados_para_previsao():
     conn = conectar()
     sql = """
-      SELECT
-        EXTRACT(YEAR FROM data_hora) AS ano,
-        EXTRACT(MONTH FROM data_hora) AS mes,
-        EXTRACT(DAY FROM data_hora) AS dia,
-        EXTRACT(HOUR FROM data_hora) AS hora,
-        SUM(valor_total) AS total_vendas
-      FROM fato_venda
-      GROUP BY ano, mes, dia, hora
-      ORDER BY ano, mes, dia, hora;
+        SELECT
+            dt.ano,
+            dt.mes,
+            dt.dia,
+            SUM(fv.valor_total) AS total_vendas
+        FROM fato_venda fv
+        JOIN dim_tempo dt ON fv.id_tempo = dt.id_tempo
+        GROUP BY dt.ano, dt.mes, dt.dia
+        ORDER BY dt.ano, dt.mes, dt.dia;
     """
     with conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -391,27 +390,31 @@ def get_dados_para_previsao():
     return rows
 
 def fetch_olap_vendas_completo():
-    sql = """
-    SELECT
-        dt.ano, dt.mes, dt.dia,
-        dl.cidade, dl.estado,
-        p.categoria, p.marca,
-        SUM(fv.quantidade) AS total_quantidade,
-        SUM(fv.valor_total) AS total_valor
-    FROM fato_venda fv
-    JOIN dim_tempo dt ON fv.data_hora = dt.data_hora
-    JOIN dim_local dl ON fv.local_id = dl.id
-    JOIN produto p ON fv.produto_id = p.id
-    GROUP BY dt.ano, dt.mes, dt.dia, dl.cidade, dl.estado, p.categoria, p.marca
-    ORDER BY dt.ano, dt.mes, dt.dia, dl.cidade, dl.estado, p.categoria, p.marca;
-    """
     conn = conectar()
+    sql = """
+        SELECT 
+            dt.ano,
+            dt.mes,
+            dt.dia,
+            lj.nome_loja,
+            dp.nome_produto,
+            dc.nome_categoria AS categoria,
+            dp.marca,
+            SUM(fv.valor_total) AS total_vendas
+        FROM fato_venda fv
+        JOIN dim_tempo dt ON fv.id_tempo = dt.id_tempo
+        JOIN loja lj ON fv.id_loja = lj.id_loja
+        JOIN dim_produto dp ON fv.id_produto = dp.id_produto
+        JOIN dim_categoria dc ON dp.id_categoria = dc.id_categoria
+        GROUP BY dt.ano, dt.mes, dt.dia, lj.nome_loja, dp.nome_produto, dc.nome_categoria, dp.marca
+        ORDER BY dt.ano, dt.mes, dt.dia;
+    """
     with conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(sql)
-            resultados = cur.fetchall()
+            rows = cur.fetchall()
     conn.close()
-    return resultados
+    return rows
 
 # 📈 Previsão de vendas
 import pandas as pd
@@ -454,60 +457,55 @@ def prever_vendas():
     plt.show()
     
     
-    
-    
 def consulta_olap():
-     conn = conectar()
-     sql = """
+    conn = conectar()
+    sql = """
     SELECT
         dt.ano,
         dt.mes,
-        dl.estado,
-        dl.cidade,
-        p.categoria,
-        p.marca,
+        l.estado,
+        l.cidade,
+        dc.nome_categoria AS categoria,
+        dp.marca,
         SUM(fv.quantidade) AS total_quantidade,
         SUM(fv.valor_total) AS total_valor
     FROM fato_venda fv
-    JOIN dim_tempo dt ON fv.data_hora = dt.data_hora
-    JOIN dim_local dl ON fv.local_id = dl.id
-    JOIN produto p ON fv.produto_id = p.id
+    JOIN dim_tempo dt ON fv.id_tempo = dt.id_tempo
+    JOIN loja l ON fv.id_loja = l.id_loja
+    JOIN dim_produto dp ON fv.id_produto = dp.id_produto
+    JOIN dim_categoria dc ON dp.id_categoria = dc.id_categoria
     GROUP BY
         dt.ano, dt.mes,
-        dl.estado, dl.cidade,
-        p.categoria, p.marca
+        l.estado, l.cidade,
+        dc.nome_categoria,
+        dp.marca
     ORDER BY dt.ano, dt.mes;
     """
-     with conn:
+    with conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(sql)
             resultado = cur.fetchall()
-     conn.close()  # fechar conexão antes do retorno
+    conn.close()  # fechar conexão antes do retorno
 
     # Exibir no terminal como tabela
-     df = pd.DataFrame(resultado)
-     print("\n📊 RESULTADO OLAP:\n")
-     print(df)
-     print("faz o L porraaaaaaa")
-     return df
-  
-  
+    df = pd.DataFrame(resultado)
+    print("\n📊 RESULTADO OLAP:\n")
+    print(df)
+    print("faz o L porraaaaaaa")
+    return df
+
+
 def consulta_olap_dinamica(agrupamentos=[], filtros={}):
     conn = conectar()
 
-    # Definir possíveis dimensões
     dimensoes = {
         "ano": "dt.ano",
         "mes": "dt.mes",
         "dia": "dt.dia",
-        "cidade": "dl.cidade",
-        "estado": "dl.estado",
-        "pais": "dl.pais",
-        "categoria": "p.categoria",
+        "categoria": "p.categoria",  # Aqui, categoria é id_categoria? Talvez precise ajustar
         "marca": "p.marca"
     }
 
-    # Montagem das colunas SELECT e GROUP BY
     select_cols = []
     group_by_cols = []
 
@@ -519,45 +517,40 @@ def consulta_olap_dinamica(agrupamentos=[], filtros={}):
     select_clause = ", ".join(select_cols) if select_cols else ""
     group_by_clause = ", ".join(group_by_cols) if group_by_cols else ""
 
-    # SELECT padrão com medidas
     sql = f"""
         SELECT
             {select_clause}{"," if select_clause else ""}
             SUM(fv.quantidade) AS total_quantidade,
             SUM(fv.valor_total) AS total_valor
         FROM fato_venda fv
-        JOIN dim_tempo dt ON fv.data_hora = dt.data_hora
-        JOIN dim_local dl ON fv.local_id = dl.id
-        JOIN produto p ON fv.produto_id = p.id
+        JOIN dim_tempo dt ON fv.id_tempo = dt.id_tempo
+        JOIN produto p ON fv.id_produto = p.id_produto
+        WHERE 'SP' = 'SP'
     """
 
-    # WHERE de filtros
-    where_clause = ""
+    where_conditions = []
+    values = []
     if filtros:
-        conditions = []
         for key, value in filtros.items():
             if key in dimensoes:
-                conditions.append(f"{dimensoes[key]} = %s")
-        where_clause = "WHERE " + " AND ".join(conditions)
+                where_conditions.append(f"{dimensoes[key]} = %s")
+                values.append(value)
 
-    # Final SQL
+    if where_conditions:
+        sql += " AND " + " AND ".join(where_conditions)
+
     if group_by_clause:
-        sql += f" {where_clause} GROUP BY {group_by_clause} ORDER BY {group_by_clause};"
+        sql += f" GROUP BY {group_by_clause} ORDER BY {group_by_clause};"
     else:
-        sql += f" {where_clause};"
+        sql += ";"
 
-    # Coletar valores dos filtros
-    values = tuple(v for k, v in filtros.items() if k in dimensoes)
-
-    # Executar consulta
     with conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(sql, values)
+            cur.execute(sql, tuple(values))
             resultado = cur.fetchall()
 
     conn.close()
 
-    # Mostrar em dataframe
     df = pd.DataFrame(resultado)
     print("\n📊 RESULTADO OLAP DINÂMICO:\n")
     print(df)

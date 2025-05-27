@@ -1,5 +1,5 @@
-from .postegres import fetch_vendas_por_hora, prever_vendas, fetch_olap_vendas_completo
-from .postegres import consulta_olap, consulta_olap_dinamica
+from postegres import fetch_vendas_por_hora, prever_vendas, fetch_olap_vendas_completo
+from postegres import consulta_olap, consulta_olap_dinamica
 import pandas as pd
 
 dicionarioProfundidade = {
@@ -9,12 +9,16 @@ dicionarioProfundidade = {
 }
 
 def mostrar_olap():
+    print("\nExibindo análise OLAP das vendas:\n")
     dados = fetch_olap_vendas_completo()
     for linha in dados:
-        print(f"{linha['ano']}-{linha['mes']:02d}-{linha['dia']:02d} | "
-              f"{linha['cidade']}/{linha['estado']} | "
-              f"{linha['categoria']} - {linha['marca']} | "
-              f"Qtd: {linha['total_quantidade']} | Total: R$ {linha['total_valor']}")
+        print(
+            f"{linha['dia']}/{linha['mes']}/{linha['ano']} | "
+            f"{linha['nome_loja']} | "
+            f"{linha['nome_produto']} - {linha['categoria']} - {linha['marca']} | "
+            f"Total Vendas: R${linha['total_vendas']:.2f}"
+        )
+
 
 def menu():
     while True:
@@ -58,12 +62,14 @@ def menu():
 
                     if rollDrill == 'drill':
                         while profundidade < 3:
-                            consulta_olap_dinamica(agrupamentos=[dicionarioProfundidade[profundidade]])
+                            consulta_olap_dinamica(agrupamentos=dicionarioProfundidade[profundidade])
+                            print(f"Profundidade atual: {profundidade}")
                             profundidade += 1
 
                     elif rollDrill == 'roll':
                         while profundidade > 1:
-                            consulta_olap_dinamica(agrupamentos=[dicionarioProfundidade[profundidade]])
+                            consulta_olap_dinamica(agrupamentos=dicionarioProfundidade[profundidade])
+                            print(f"Profundidade atual: {profundidade}")
                             profundidade -= 1
 
                     else:
